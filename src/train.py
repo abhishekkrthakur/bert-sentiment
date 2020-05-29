@@ -15,56 +15,59 @@ from transformers import get_linear_schedule_with_warmup
 
 def run():
     dfx = pd.read_csv(config.TRAINING_FILE).fillna("none")
-    dfx.sentiment = dfx.sentiment.apply(lambda x: 1 if x == "positive" else 0)
-
+    dfx.sentiment = dfx.sentiment.apply(
+        lambda x: 1 if x == "positive" else 0
+    )
+ 
     df_train, df_valid = model_selection.train_test_split(
-        dfx, test_size=0.1, random_state=42, stratify=dfx.sentiment.values
+        dfx,
+        test_size=0.1,
+        random_state=42,
+        stratify=dfx.sentiment.values
     )
 
     df_train = df_train.reset_index(drop=True)
     df_valid = df_valid.reset_index(drop=True)
 
     train_dataset = dataset.BERTDataset(
-        review=df_train.review.values, target=df_train.sentiment.values
+        review=df_train.review.values,
+        target=df_train.sentiment.values
     )
 
     train_data_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=config.TRAIN_BATCH_SIZE, num_workers=4
+        train_dataset,
+        batch_size=config.TRAIN_BATCH_SIZE,
+        num_workers=4
     )
 
     valid_dataset = dataset.BERTDataset(
-        review=df_valid.review.values, target=df_valid.sentiment.values
+        review=df_valid.review.values,
+        target=df_valid.sentiment.values
     )
 
     valid_data_loader = torch.utils.data.DataLoader(
-        valid_dataset, batch_size=config.VALID_BATCH_SIZE, num_workers=1
+        valid_dataset,
+        batch_size=config.VALID_BATCH_SIZE,
+        num_workers=1
     )
 
     device = torch.device("cuda")
     model = BERTBaseUncased()
     model.to(device)
-
+    
     param_optimizer = list(model.named_parameters())
     no_decay = ["bias", "LayerNorm.bias", "LayerNorm.weight"]
     optimizer_parameters = [
-        {
-            "params": [
-                p for n, p in param_optimizer if not any(nd in n for nd in no_decay)
-            ],
-            "weight_decay": 0.001,
-        },
-        {
-            "params": [
-                p for n, p in param_optimizer if any(nd in n for nd in no_decay)
-            ],
-            "weight_decay": 0.0,
-        },
+        {'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)], 'weight_decay': 0.001},
+        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0},
     ]
 
     num_train_steps = int(len(df_train) / config.TRAIN_BATCH_SIZE * config.EPOCHS)
     optimizer = AdamW(optimizer_parameters, lr=3e-5)
     scheduler = get_linear_schedule_with_warmup(
-        optimizer, num_warmup_steps=0, num_training_steps=num_train_steps
+        optimizer,
+        num_warmup_steps=0,
+        num_training_steps=num_train_steps
     )
 
     model = nn.DataParallel(model)
