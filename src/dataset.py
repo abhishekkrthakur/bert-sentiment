@@ -20,17 +20,13 @@ class BERTDataset:
             review,
             None,
             add_special_tokens=True,
-            max_length=self.max_len
+            max_length=self.max_len,
+            pad_to_max_length=True
         )
 
         ids = inputs["input_ids"]
         mask = inputs["attention_mask"]
         token_type_ids = inputs["token_type_ids"]
-
-        padding_length = self.max_len - len(ids)
-        ids = ids + ([0] * padding_length)
-        mask = mask + ([0] * padding_length)
-        token_type_ids = token_type_ids + ([0] * padding_length)
 
         return {
             'ids': torch.tensor(ids, dtype=torch.long),
