@@ -8,4 +8,7 @@ EPOCHS = 10
 BERT_PATH = "../input/bert_base_uncased/"
 MODEL_PATH = "model.bin"
 TRAINING_FILE = "../input/imdb.csv"
-TOKENIZER = transformers.BertTokenizer.from_pretrained(BERT_PATH, do_lower_case=True)
+TOKENIZER = transformers.BertTokenizer.from_pretrained(
+    BERT_PATH,
+    do_lower_case=True
+)

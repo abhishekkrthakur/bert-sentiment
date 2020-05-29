@@ -17,7 +17,6 @@ DEVICE = "cuda"
 PREDICTION_DICT = dict()
 memory = joblib.Memory("../input/", verbose=0)
 
-
 def predict_from_cache(sentence):
     if sentence in PREDICTION_DICT:
         return PREDICTION_DICT[sentence]
@@ -35,7 +34,10 @@ def sentence_prediction(sentence):
     review = " ".join(review.split())
 
     inputs = tokenizer.encode_plus(
-        review, None, add_special_tokens=True, max_length=max_len
+        review,
+        None,
+        add_special_tokens=True,
+        max_length=max_len
     )
 
     ids = inputs["input_ids"]
@@ -55,7 +57,11 @@ def sentence_prediction(sentence):
     token_type_ids = token_type_ids.to(DEVICE, dtype=torch.long)
     mask = mask.to(DEVICE, dtype=torch.long)
 
-    outputs = MODEL(ids=ids, mask=mask, token_type_ids=token_type_ids)
+    outputs = MODEL(
+        ids=ids,
+        mask=mask,
+        token_type_ids=token_type_ids
+    )
 
     outputs = torch.sigmoid(outputs).cpu().detach().numpy()
     return outputs[0][0]
@@ -69,10 +75,10 @@ def predict():
     negative_prediction = 1 - positive_prediction
     response = {}
     response["response"] = {
-        "positive": str(positive_prediction),
-        "negative": str(negative_prediction),
-        "sentence": str(sentence),
-        "time_taken": str(time.time() - start_time),
+        'positive': str(positive_prediction),
+        'negative': str(negative_prediction),
+        'sentence': str(sentence),
+        'time_taken': str(time.time() - start_time)
     }
     return flask.jsonify(response)
 
