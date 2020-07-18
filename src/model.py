@@ -1,6 +1,7 @@
 import config
 import transformers
 import torch.nn as nn
+from torch.cuda import amp
 
 
 class BERTBaseUncased(nn.Module):
@@ -10,6 +11,7 @@ class BERTBaseUncased(nn.Module):
         self.bert_drop = nn.Dropout(0.3)
         self.out = nn.Linear(768, 1)
 
+    @amp.autocast()
     def forward(self, ids, mask, token_type_ids):
         _, o2 = self.bert(ids, attention_mask=mask, token_type_ids=token_type_ids)
         bo = self.bert_drop(o2)

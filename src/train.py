@@ -12,6 +12,8 @@ from sklearn import metrics
 from transformers import AdamW
 from transformers import get_linear_schedule_with_warmup
 
+from torch.cuda import amp
+
 
 def run():
     dfx = pd.read_csv(config.TRAINING_FILE).fillna("none")
@@ -68,10 +70,12 @@ def run():
     )
 
     model = nn.DataParallel(model)
+    scaler = amp.GradScaler()
 
     best_accuracy = 0
     for epoch in range(config.EPOCHS):
-        engine.train_fn(train_data_loader, model, optimizer, device, scheduler)
+        engine.train_fn(train_data_loader, model, 
+                        optimizer, device, scheduler, scaler)
         outputs, targets = engine.eval_fn(valid_data_loader, model, device)
         outputs = np.array(outputs) >= 0.5
         accuracy = metrics.accuracy_score(targets, outputs)
