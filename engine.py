@@ -1,13 +1,13 @@
 import torch
 import torch.nn as nn
 from tqdm import tqdm
-from torch.cuda import amp
+
 
 def loss_fn(outputs, targets):
     return nn.BCEWithLogitsLoss()(outputs, targets.view(-1, 1))
 
 
-def train_fn(data_loader, model, optimizer, device, scheduler, scaler):
+def train_fn(data_loader, model, optimizer, device, scheduler):
     model.train()
 
     for bi, d in tqdm(enumerate(data_loader), total=len(data_loader)):
@@ -22,14 +22,11 @@ def train_fn(data_loader, model, optimizer, device, scheduler, scaler):
         targets = targets.to(device, dtype=torch.float)
 
         optimizer.zero_grad()
+        outputs = model(ids=ids, mask=mask, token_type_ids=token_type_ids)
 
-        with amp.autocast():
-            outputs = model(ids=ids, mask=mask, token_type_ids=token_type_ids)
-            loss = loss_fn(outputs, targets)
-
-        scaler.scale(loss).backward()
-        scaler.step(optimizer)
-        scaler.update()
+        loss = loss_fn(outputs, targets)
+        loss.backward()
+        optimizer.step()
         scheduler.step()
 
 

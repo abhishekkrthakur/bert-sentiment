@@ -7,27 +7,15 @@ from flask import request
 from model import BERTBaseUncased
 import functools
 import torch.nn as nn
-import joblib
 
 
 app = Flask(__name__)
 
 MODEL = None
-DEVICE = "cuda"
+DEVICE = config.DEVICE
 PREDICTION_DICT = dict()
-memory = joblib.Memory("../input/", verbose=0)
 
 
-def predict_from_cache(sentence):
-    if sentence in PREDICTION_DICT:
-        return PREDICTION_DICT[sentence]
-    else:
-        result = sentence_prediction(sentence)
-        PREDICTION_DICT[sentence] = result
-        return result
-
-
-@memory.cache
 def sentence_prediction(sentence):
     tokenizer = config.TOKENIZER
     max_len = config.MAX_LEN
@@ -79,8 +67,7 @@ def predict():
 
 if __name__ == "__main__":
     MODEL = BERTBaseUncased()
-    MODEL = nn.DataParallel(MODEL)
     MODEL.load_state_dict(torch.load(config.MODEL_PATH))
     MODEL.to(DEVICE)
     MODEL.eval()
-    app.run()
+    app.run(host="0.0.0.0", port="9999")
